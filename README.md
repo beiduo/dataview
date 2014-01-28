@@ -1,3 +1,9 @@
+#Data View plugin for jquery
+
+data example: data/data.json
+
+final object
+
     {
         "cols": {
             "status": {
