@@ -39,6 +39,8 @@
 
         var extra = (typeof options === 'object') ? options: {};
 
+        opts.result.tpl = opts.tpl;
+
         //create table element
         var container = document.createElement('table');
         container.className = 'vui-datatable';
@@ -50,20 +52,13 @@
         for (key in opts.cols){
             obj = {};
 
-            obj.tpl = opts.cols[key].tpl || '{{value}}';
-            obj.padding = opts.cols[key].padding || '0';
-            obj.align = opts.cols[key].align || 'left';
-            obj.vlign = opts.cols[key].vlign || 'top';
             obj.type = key;
 
             col = document.createElement('th');
             col.className = 'vui-datatable-col-' + obj.type;
-            col.style.textAlign = obj.align;
-            col.style.verticalAlign = obj.vlign;
 
             colwrap = document.createElement('div');
             colwrap.className = 'vui-datatable-inner';
-            colwrap.style.padding = obj.padding;
 
             html = opts.cols[key].name;
 
@@ -91,39 +86,22 @@
         var row, objRow, rowCols, fields, tBody = document.createElement('tbody');
 
         for (i in opts.items){
-            objRow = {
-                id: i,
-                cols: {}
-            };
+            objRow = opts.items[i];
 
             row = document.createElement('tr');
-            row.setAttribute('data-id', opts.items[i].id);
+            row.setAttribute('data-id', i);
 
-            fields = opts.items[i].fields;
+            objRow.mode = "0";
 
-            for (num in fields){
-                obj = {}
+            objRow.tpl = []
+            if (typeof opts.tpl === 'string'){
+                objRow.tpl[0] = opts.tpl;
+            } else {
+                objRow.tpl = opts.tpl;
+            }
 
-                obj.type = opts.result.cols[num].type;
-                obj.tpl = opts.result.cols[num].tpl;
-                obj.align = opts.result.cols[num].align;
-                obj.vlign = opts.result.cols[num].vlign;
-                obj.padding = opts.result.cols[num].padding;
-
-                obj.tpl = [];
-                if (typeof opts.result.cols[num].tpl === 'string'){
-                    obj.tpl[0] = opts.result.cols[num].tpl;
-                } else {
-                    obj.tpl = opts.result.cols[num].tpl;
-                }
-
-                obj.mode = '0';
-
-                for (key in fields[num]){
-                    obj[key] = fields[num][key];
-                }
-
-                objRow.cols[num] = obj
+            for (key in opts.items[i]){
+                objRow[key] = opts.items[i][key];
             }
 
             objRow.node = row;
@@ -139,31 +117,16 @@
             }
 
             objRow.render = function(){
-                var self = this;
+                var tpl, self = this;
 
                 self.node.innerHTML = '';
 
-                for (key in self.cols){
-                    col = document.createElement('td');
-                    col.className = 'vui-datatable-col-' + self.cols[key].type;
-                    col.style.textAlign = self.cols[key].align;
-                    col.style.verticalAlign = self.cols[key].vlign;
+                for (key in self){
+                    tpl = self.tpl[Number(self.mode)];
 
-                    colwrap = document.createElement('div');
-                    colwrap.className = 'vui-datatable-inner';
-                    colwrap.style.padding = self.cols[key].padding;
+                    html = nano(tpl, self);
 
-                    tpl = self.cols[key].tpl[Number(self.cols[key].mode)];
-
-                    html = nano(tpl, self.cols[key]);
-
-                    colwrap.innerHTML = html;
-
-                    col.appendChild(colwrap);
-
-                    self.cols[key].node = col;
-
-                    self.node.appendChild(self.cols[key].node);
+                    self.node.innerHTML = html;
                 }
             }
 
@@ -171,7 +134,7 @@
 
             opts.result.items[i] = objRow;
 
-            tBody.appendChild(objRow.node);
+            tBody.appendChild(opts.result.items[i].node);
         }
 
         container.appendChild(tBody);

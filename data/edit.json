@@ -1,8 +1,6 @@
 {
     "status": "success",
     "data": {
-        "price": {
-            "value": "485"
-        }
+            "price": "485"
     }
 }

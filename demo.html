@@ -32,12 +32,12 @@ $.ajax({
 
                             self.delete();
                         } else if ($(this).is('.edit')){
-                            self.cols.price.mode = '1';
-                            self.cols.operator.mode = '1';
+                            self.mode = '1';
+                            self.mode = '1';
                             self.render();
                         } else if ($(this).is('.cancel')){
-                            self.cols.price.mode = '0';
-                            self.cols.operator.mode = '0';
+                            self.mode = '0';
+                            self.mode = '0';
                             self.render();
                         } else if ($(this).is('.save')){
                             $.ajax({
@@ -48,13 +48,11 @@ $.ajax({
                                     if (data.status === 'success'){
                                         var cb = data.data, field, i;
                                         for (var key in cb){
-                                            field = self.cols[key];
-                                            for (i in cb[key]){
-                                                field[i] = cb[key][i];
-                                            }
+                                            field = self;
+                                            field[key] = cb[key];
                                         }
-                                        self.cols.price.mode = '0';
-                                        self.cols.operator.mode = '0';
+                                        self.mode = '0';
+                                        self.mode = '0';
                                         self.render();
                                     }
                                 }
