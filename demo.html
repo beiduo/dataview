@@ -36,9 +36,9 @@ function nano(template, data) {
             //返回的最终对象
             result: {
                 //表头tHead
-                cols: [],
+                cols: {},
                 //数据tBody
-                items: []
+                items: {}
             }
         };
 
@@ -98,9 +98,9 @@ function nano(template, data) {
         //create tbody element
         var row, objRow, rowCols, fields, tBody = document.createElement('tbody');
 
-        for (i = 0; i < opts.items.length; i++){
+        for (i in opts.items){
             objRow = {
-                id: opts.items[i].id,
+                id: i,
                 cols: {}
             };
 
@@ -113,31 +113,23 @@ function nano(template, data) {
                 obj = {}
 
                 obj.type = opts.result.cols[num].type;
+                obj.tpl = opts.result.cols[num].tpl;
+                obj.align = opts.result.cols[num].align;
+                obj.vlign = opts.result.cols[num].vlign;
+                obj.padding = opts.result.cols[num].padding;
+
+                obj.tpl = [];
+                if (typeof opts.result.cols[num].tpl === 'string'){
+                    obj.tpl[0] = opts.result.cols[num].tpl;
+                } else {
+                    obj.tpl = opts.result.cols[num].tpl;
+                }
+
+                obj.mode = '0';
 
                 for (key in fields[num]){
                     obj[key] = fields[num][key];
                 }
-
-                col = document.createElement('td');
-                col.className = 'vui-datatable-col-' + obj.type;
-                col.style.textAlign = opts.result.cols[num].align;
-                col.style.verticalAlign = opts.result.cols[num].vlign;
-
-                colwrap = document.createElement('div');
-                colwrap.className = 'vui-datatable-inner';
-                colwrap.style.padding = opts.result.cols[num].padding;
-
-                tpl = opts.result.cols[num].tpl;
-
-                html = nano(tpl, obj);
-
-                colwrap.innerHTML = html;
-
-                col.appendChild(colwrap);
-
-                obj.node = col;
-
-                row.appendChild(obj.node);
 
                 objRow.cols[num] = obj
             }
@@ -156,9 +148,36 @@ function nano(template, data) {
 
             objRow.render = function(){
                 var self = this;
+
+                self.node.innerHTML = '';
+
+                for (key in self.cols){
+                    col = document.createElement('td');
+                    col.className = 'vui-datatable-col-' + self.cols[key].type;
+                    col.style.textAlign = self.cols[key].align;
+                    col.style.verticalAlign = self.cols[key].vlign;
+
+                    colwrap = document.createElement('div');
+                    colwrap.className = 'vui-datatable-inner';
+                    colwrap.style.padding = self.cols[key].padding;
+
+                    tpl = self.cols[key].tpl[Number(self.cols[key].mode)];
+
+                    html = nano(tpl, self.cols[key]);
+
+                    colwrap.innerHTML = html;
+
+                    col.appendChild(colwrap);
+
+                    self.cols[key].node = col;
+
+                    self.node.appendChild(self.cols[key].node);
+                }
             }
 
-            opts.result.items.push(objRow);
+            objRow.render();
+
+            opts.result.items[i] = objRow;
 
             tBody.appendChild(objRow.node);
         }
@@ -193,6 +212,34 @@ $.ajax({
                         if ($(this).is('.delete')){
 
                             self.delete();
+                        } else if ($(this).is('.edit')){
+                            self.cols.price.mode = '1';
+                            self.cols.operator.mode = '1';
+                            self.render();
+                        } else if ($(this).is('.cancel')){
+                            self.cols.price.mode = '0';
+                            self.cols.operator.mode = '0';
+                            self.render();
+                        } else if ($(this).is('.save')){
+                            $.ajax({
+                                url: 'data/edit.json',
+                                dataType: 'json',
+                                cache: false,
+                                success: function(data){
+                                    if (data.status === 'success'){
+                                        var cb = data.data, field, i;
+                                        for (var key in cb){
+                                            field = self.cols[key];
+                                            for (i in cb[key]){
+                                                field[i] = cb[key][i];
+                                            }
+                                        }
+                                        self.cols.price.mode = '0';
+                                        self.cols.operator.mode = '0';
+                                        self.render();
+                                    }
+                                }
+                            });
                         }
                     });
                 }
