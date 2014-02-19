@@ -29,14 +29,11 @@ $.ajax({
 
                     $(self.node).delegate('a', 'click', function(){
                         if ($(this).is('.delete')){
-
                             self.delete();
                         } else if ($(this).is('.edit')){
-                            self.mode = '1';
-                            self.render();
+                            self.render('1');
                         } else if ($(this).is('.cancel')){
-                            self.mode = '0';
-                            self.render();
+                            self.render('0');
                         } else if ($(this).is('.save')){
                             $.ajax({
                                 url: 'data/edit.json',
@@ -44,13 +41,7 @@ $.ajax({
                                 cache: false,
                                 success: function(data){
                                     if (data.status === 'success'){
-                                        var cb = data.data, field, i;
-                                        for (var key in cb){
-                                            field = self;
-                                            field[key] = cb[key];
-                                        }
-                                        self.mode = '0';
-                                        self.render();
+                                        self.render('0', cb);
                                     }
                                 }
                             });

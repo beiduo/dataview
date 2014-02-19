@@ -116,8 +116,26 @@
                 objRow.event();
             }
 
-            objRow.render = function(){
+            objRow.render = function(x, y){
                 var tpl, self = this;
+
+                var mode, extend;
+
+                if (typeof x === 'object'){
+                    extend = x;
+                } else if (typeof x !== 'undefined'){
+                    mode = x;
+                    if (typeof y === 'object'){
+                        extend = y;
+                    }
+                }
+
+                var field;
+                for (var fieldKey in extend){
+                    field = self;
+                    field[fieldKey] = extend[fieldKey];
+                }
+                self.mode = mode;
 
                 self.node.innerHTML = '';
 
