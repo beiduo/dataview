@@ -31,9 +31,9 @@ $.ajax({
                         if ($(this).is('.delete')){
                             self.delete();
                         } else if ($(this).is('.edit')){
-                            self.render('1');
+                            self.render(1);
                         } else if ($(this).is('.cancel')){
-                            self.render('0');
+                            self.render(0);
                         } else if ($(this).is('.save')){
                             $.ajax({
                                 url: 'data/edit.json',
@@ -41,7 +41,7 @@ $.ajax({
                                 cache: false,
                                 success: function(data){
                                     if (data.status === 'success'){
-                                        self.render('0', cb);
+                                        self.render(0, data.data);
                                     }
                                 }
                             });

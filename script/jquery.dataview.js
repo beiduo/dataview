@@ -119,15 +119,17 @@
             objRow.render = function(x, y){
                 var tpl, self = this;
 
-                var mode, extend;
+                var extend;
 
                 if (typeof x === 'object'){
                     extend = x;
                 } else if (typeof x !== 'undefined'){
-                    mode = x;
+                    self.mode = x;
                     if (typeof y === 'object'){
                         extend = y;
                     }
+                } else {
+                    self.mode = 0;
                 }
 
                 var field;
@@ -135,7 +137,6 @@
                     field = self;
                     field[fieldKey] = extend[fieldKey];
                 }
-                self.mode = mode;
 
                 self.node.innerHTML = '';
 
