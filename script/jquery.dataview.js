@@ -25,6 +25,7 @@
             status: "unknown",
             pagination: '1',
             pages: '1',
+            batch: 0,
             //final object
             result: {
                 //tHead
@@ -73,6 +74,19 @@
 
         var tHeadwrap = document.createElement('tr');
 
+        if (Number(opts.batch) === 1){
+            var tHeadCheckbox = document.createElement('th');
+            tHeadCheckbox.className = 'vui-datatable-col-check';
+            var tHeadCheckboxInner = document.createElement('div');
+            tHeadCheckboxInner.className = 'vui-datatable-inner';
+            var tHeadCheckboxIpt = document.createElement('input');
+            tHeadCheckboxIpt.type = 'checkbox';
+            opts.result.checkall = tHeadCheckboxIpt;
+            tHeadCheckboxInner.appendChild(tHeadCheckboxIpt);
+            tHeadCheckbox.appendChild(tHeadCheckboxInner);
+            tHeadwrap.appendChild(tHeadCheckbox);
+        }
+
         for (key in opts.result.cols){
             tHeadwrap.appendChild(opts.result.cols[key].node);
         }
@@ -91,7 +105,7 @@
             row = document.createElement('tr');
             row.setAttribute('data-id', i);
 
-            objRow.mode = "0";
+            objRow.mode = 0;
 
             objRow.tpl = []
             if (typeof opts.tpl === 'string'){
@@ -123,7 +137,7 @@
 
                 if (typeof x === 'object'){
                     extend = x;
-                } else if (typeof x !== 'undefined'){
+                } else if (typeof x === 'number'){
                     self.mode = x;
                     if (typeof y === 'object'){
                         extend = y;
@@ -147,6 +161,26 @@
 
                     self.node.innerHTML = html;
                 }
+
+                if (Number(opts.batch) === 1){
+                    var checkbox = document.createElement('td');
+                    checkbox.className = 'vui-datatable-col-check';
+                    var checkboxInner = document.createElement('div');
+                    checkboxInner.className = 'vui-datatable-inner';
+                    var checkboxIpt = document.createElement('input');
+                    checkboxIpt.type = 'checkbox';
+                    self.checkbox = checkboxIpt;
+                    checkboxInner.appendChild(checkboxIpt);
+                    checkbox.appendChild(checkboxInner);
+
+                    self.node.insertBefore(checkbox, self.node.firstChild);
+
+                    checkboxIpt.checked = self.checked;
+
+                    $(checkboxIpt).on('click', function(){
+                        self.checked = $(this)[0].checked;
+                    });
+                }
             }
 
             objRow.render();
@@ -160,6 +194,18 @@
 
         for (i = 0; i < this.length; i++){
             this[i].appendChild(container);
+        }
+
+        if (Number(opts.batch) === 1 && typeof opts.result.checkall !== 'undefined'){
+            $(opts.result.checkall).on('click', function(){
+                var checked = $(this)[0].checked;
+                for (key in opts.result.items){
+                    if (typeof opts.result.items[key].checkbox !== 'undefined' && !opts.result.items[key].checkbox.disabled){
+                        opts.result.items[key].checkbox.checked = checked;
+                        opts.result.items[key].checked = checked;
+                    }
+                }
+            });
         }
 
         return opts.result;
