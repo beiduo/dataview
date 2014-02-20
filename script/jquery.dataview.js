@@ -44,9 +44,9 @@
         opts.result.tpl = opts.tpl;
 
         //create table element
-        var container = document.createElement('table');
-        container.className = 'vui-datatable';
-        container.style.width = "100%";
+        opts.result.container = document.createElement('table');
+        opts.result.container.className = 'vui-datatable';
+        opts.result.container.style.width = "100%";
 
         //create thead element
         var col, colwrap;
@@ -95,131 +95,167 @@
         var tHead = document.createElement('thead');
         tHead.appendChild(tHeadwrap);
 
-        container.appendChild(tHead);
+        opts.result.container.appendChild(tHead);
 
         //create tbody element
-        var row, objRow, rowCols, fields, tBody = document.createElement('tbody');
+        opts.result.tBody = document.createElement('tbody');
 
-        for (i in opts.items){
-            objRow = opts.items[i];
+        opts.result.create = function(dataItems){
+            var row, objRow, rowCols, fields;
 
-            row = document.createElement('tr');
-            row.setAttribute('data-id', i);
+            var selfList = this;
 
-            objRow.mode = 0;
+            //remove all items
+            selfList.tBody.innerHTML = '';
 
-            objRow.tpl = []
-            if (typeof opts.tpl === 'string'){
-                objRow.tpl[0] = opts.tpl;
-            } else {
-                objRow.tpl = opts.tpl;
-            }
+            //create each items
+            for (i in dataItems){
+                objRow = dataItems[i];
 
-            for (key in opts.items[i]){
-                objRow[key] = opts.items[i][key];
-            }
+                row = document.createElement('tr');
+                row.setAttribute('data-id', i);
 
-            objRow.node = row;
+                objRow.mode = 0;
 
-            objRow.key = i;
-
-            if (typeof extra.items === 'object'){
-                for (key in extra.items){
-                    objRow[key] = extra.items[key];
-                }
-            }
-
-            if (typeof objRow.event === 'function'){
-                objRow.event();
-            }
-
-            //render method
-            objRow.render = function(x, y){
-                var tpl, self = this;
-
-                var extend;
-
-                //if tpl mode or attributes already changed
-                if (typeof x === 'object'){
-                    extend = x;
-                } else if (typeof x === 'number'){
-                    self.mode = x;
-                    if (typeof y === 'object'){
-                        extend = y;
-                    }
+                objRow.tpl = []
+                if (typeof opts.tpl === 'string'){
+                    objRow.tpl[0] = opts.tpl;
                 } else {
-                    self.mode = 0;
+                    objRow.tpl = opts.tpl;
                 }
 
-                //add new attributes
-                for (var fieldKey in extend){
-                    self[fieldKey] = extend[fieldKey];
+                for (key in dataItems[i]){
+                    objRow[key] = dataItems[i][key];
                 }
 
-                //add tracking item
-                if (self.status === 'tracking'){
-                    if ($.isArray(opts.result.tracking)){
-                        if ($.inArray(self.key, opts.result.tracking) === -1){
-                            opts.result.tracking.push(self.key);
+                objRow.node = row;
+
+                objRow.key = i;
+
+                if (typeof extra.items === 'object'){
+                    for (key in extra.items){
+                        objRow[key] = extra.items[key];
+                    }
+                }
+
+                if (typeof objRow.event === 'function'){
+                    objRow.event();
+                }
+
+                //render method
+                objRow.render = function(x, y){
+                    var tpl, self = this;
+
+                    var extend;
+
+                    //if tpl mode or attributes already changed
+                    if (typeof x === 'object'){
+                        extend = x;
+                    } else if (typeof x === 'number'){
+                        self.mode = x;
+                        if (typeof y === 'object'){
+                            extend = y;
                         }
                     } else {
-                        opts.result.tracking = [self.key];
+                        self.mode = 0;
                     }
-                } else {
-                    if ($.isArray(opts.result.tracking)){
-                        if ($.inArray(self.key, opts.result.tracking) > -1){
-                            opts.result.tracking = $.grep(opts.result.tracking, function(n, i){
-                                return n !== self.key;
-                            });
+
+                    //add new attributes
+                    for (var fieldKey in extend){
+                        self[fieldKey] = extend[fieldKey];
+                    }
+
+                    //add tracking item
+                    if (self.status === 'tracking'){
+                        if ($.isArray(selfList.tracking)){
+                            if ($.inArray(self.key, selfList.tracking) === -1){
+                                selfList.tracking.push(self.key);
+                            }
+                        } else {
+                            selfList.tracking = [self.key];
+                        }
+                    } else {
+                        if ($.isArray(selfList.tracking)){
+                            if ($.inArray(self.key, selfList.tracking) > -1){
+                                selfList.tracking = $.grep(selfList.tracking, function(n, i){
+                                    return n !== self.key;
+                                });
+                            }
                         }
                     }
-                }
 
-                //remove current innerhtml
-                self.node.innerHTML = '';
+                    //remove current innerhtml
+                    self.node.innerHTML = '';
 
-                //use the template engine to create new innerhtml
-                //for (key in self){
+                    //use the template engine to create new innerhtml
+                    //for (key in self){
                     tpl = self.tpl[Number(self.mode)];
 
                     html = nano(tpl, self);
 
                     self.node.innerHTML = html;
-                //}
+                    //}
 
-                //if requires checkbox element
-                if (Number(opts.batch) === 1){
-                    var checkbox = document.createElement('td');
-                    checkbox.className = 'vui-datatable-col-check';
-                    var checkboxInner = document.createElement('div');
-                    checkboxInner.className = 'vui-datatable-inner';
-                    var checkboxIpt = document.createElement('input');
-                    checkboxIpt.type = 'checkbox';
-                    self.checkbox = checkboxIpt;
-                    checkboxInner.appendChild(checkboxIpt);
-                    checkbox.appendChild(checkboxInner);
+                    //if requires checkbox element
+                    if (Number(opts.batch) === 1){
+                        var checkbox = document.createElement('td');
+                        checkbox.className = 'vui-datatable-col-check';
+                        var checkboxInner = document.createElement('div');
+                        checkboxInner.className = 'vui-datatable-inner';
+                        var checkboxIpt = document.createElement('input');
+                        checkboxIpt.type = 'checkbox';
+                        self.checkbox = checkboxIpt;
+                        checkboxInner.appendChild(checkboxIpt);
+                        checkbox.appendChild(checkboxInner);
 
-                    self.node.insertBefore(checkbox, self.node.firstChild);
+                        self.node.insertBefore(checkbox, self.node.firstChild);
 
-                    checkboxIpt.checked = self.checked;
+                        checkboxIpt.checked = self.checked;
 
-                    $(checkboxIpt).on('click', function(){
-                        self.checked = $(this)[0].checked;
-                    });
+                        $(checkboxIpt).on('click', function(){
+                            self.checked = $(this)[0].checked;
+                        });
+                    }
                 }
+
+                objRow.render();
+
+                selfList.items[i] = objRow;
+
+                //add new item
+                selfList.tBody.appendChild(selfList.items[i].node);
             }
 
-            objRow.render();
+            selfList.container.appendChild(selfList.tBody);
 
-            opts.result.items[i] = objRow;
+            //reload
+            selfList.reload = function(url){
+                //get url
+                var url = (typeof url === 'string') ? url : '';
+                url = url || window.location.href || '';
+                if (url) {
+                    // clean url (don't include hash value)
+                    url = (url.match(/^([^#]+)/)||[])[1];
+                }
 
-            tBody.appendChild(opts.result.items[i].node);
+                //send request
+                $.ajax({
+                    type: 'get',
+                    url: url,
+                    dataType: 'json',
+                    success: function(cb){
+                        if (cb.status === 'success'){
+                            opts.result.create(cb.items);
+                        }
+                    }
+                });
+            }
         }
 
-        container.appendChild(tBody);
+        opts.result.create(opts.items);
 
         for (i = 0; i < this.length; i++){
-            this[i].appendChild(container);
+            this[i].appendChild(opts.result.container);
         }
 
         //if requires checkbox element
