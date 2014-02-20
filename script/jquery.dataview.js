@@ -262,10 +262,10 @@
                     success: function(cb){
                         var key, i, item;
                         if (cb.status === 'success'){
-                            for (key in cb.data){
+                            for (key in cb.items){
                                 item = self.items[key];
                                 if (typeof item === 'object'){
-                                    item.render(cb.data[key]);
+                                    item.render(cb.items[key]);
                                 }
                             }
                         }
