@@ -31,6 +31,7 @@ $.ajax({
                         if ($(this).is('.delete')){
                             self.delete();
                         } else if ($(this).is('.edit')){
+                            console.log(dataTable);
                             self.render(1);
                         } else if ($(this).is('.cancel')){
                             self.render(0);
@@ -47,6 +48,18 @@ $.ajax({
                             });
                         }
                     });
+                }
+            },
+            list: {
+                event: function(){
+                    var self = this;
+
+                    var tracking = function(){
+                        self.track('data/track.json');
+                        setTimeout(tracking, 5000);
+                    }
+
+                    setTimeout(tracking, 5000);
                 }
             }
         });

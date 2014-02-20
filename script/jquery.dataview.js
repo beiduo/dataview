@@ -6,6 +6,7 @@
     $.fn.dataView = function(data, options){
         var  i, key, obj, html, tpl;
 
+        //Template engine
         function nano(template, data) {
             return template.replace(/\{\{([\w\.]*)\}\}/g, function(str, key) {
                 var keys = key.split("."), v = data[keys.shift()];
@@ -120,6 +121,8 @@
 
             objRow.node = row;
 
+            objRow.key = i;
+
             if (typeof extra.items === 'object'){
                 for (key in extra.items){
                     objRow[key] = extra.items[key];
@@ -130,11 +133,13 @@
                 objRow.event();
             }
 
+            //render method
             objRow.render = function(x, y){
                 var tpl, self = this;
 
                 var extend;
 
+                //if tpl mode or attributes already changed
                 if (typeof x === 'object'){
                     extend = x;
                 } else if (typeof x === 'number'){
@@ -146,22 +151,43 @@
                     self.mode = 0;
                 }
 
-                var field;
+                //add new attributes
                 for (var fieldKey in extend){
-                    field = self;
-                    field[fieldKey] = extend[fieldKey];
+                    self[fieldKey] = extend[fieldKey];
                 }
 
+                //add tracking item
+                if (self.status === 'tracking'){
+                    if ($.isArray(opts.result.tracking)){
+                        if ($.inArray(self.key, opts.result.tracking) === -1){
+                            opts.result.tracking.push(self.key);
+                        }
+                    } else {
+                        opts.result.tracking = [self.key];
+                    }
+                } else {
+                    if ($.isArray(opts.result.tracking)){
+                        if ($.inArray(self.key, opts.result.tracking) > -1){
+                            opts.result.tracking = $.grep(opts.result.tracking, function(n, i){
+                                return n !== self.key;
+                            });
+                        }
+                    }
+                }
+
+                //remove current innerhtml
                 self.node.innerHTML = '';
 
-                for (key in self){
+                //use the template engine to create new innerhtml
+                //for (key in self){
                     tpl = self.tpl[Number(self.mode)];
 
                     html = nano(tpl, self);
 
                     self.node.innerHTML = html;
-                }
+                //}
 
+                //if requires checkbox element
                 if (Number(opts.batch) === 1){
                     var checkbox = document.createElement('td');
                     checkbox.className = 'vui-datatable-col-check';
@@ -196,6 +222,7 @@
             this[i].appendChild(container);
         }
 
+        //if requires checkbox element
         if (Number(opts.batch) === 1 && typeof opts.result.checkall !== 'undefined'){
             $(opts.result.checkall).on('click', function(){
                 var checked = $(this)[0].checked;
@@ -206,6 +233,55 @@
                     }
                 }
             });
+        }
+
+        //tracking items
+        opts.result.track = function(url, attr){
+            var self = this;
+
+            //if there are items need to be tracked
+            if ($.isArray(self.tracking) && self.tracking.length > 0){
+                //get tracking url
+                var url = (typeof url === 'string') ? url : '';
+                url = url || window.location.href || '';
+                if (url) {
+                    // clean url (don't include hash value)
+                    url = (url.match(/^([^#]+)/)||[])[1];
+                }
+
+                //get attr
+                var attr = (typeof attr === 'string') ? attr : 'ids';
+                var data = attr + '=' + self.tracking.join(',');
+
+                //send request
+                $.ajax({
+                    type: 'get',
+                    url: url,
+                    data: data,
+                    dataType: 'json',
+                    success: function(cb){
+                        var key, i, item;
+                        if (cb.status === 'success'){
+                            for (key in cb.data){
+                                item = self.items[key];
+                                if (typeof item === 'object'){
+                                    item.render(cb.data[key]);
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        if (typeof extra.list === 'object'){
+            for (key in extra.list){
+                opts.result[key] = extra.list[key];
+            }
+        }
+
+        if (typeof opts.result.event === 'function'){
+            opts.result.event();
         }
 
         return opts.result;
