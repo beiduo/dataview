@@ -18,7 +18,7 @@
         "<td class=\"vui-datatable-col-status\"><div class=\"vui-datatable-inner\"><span class=\"status status-{{status}}\">{{statustext}}</span></div></td><td class=\"vui-datatable-col-subject\"><div class=\"vui-datatable-inner\"><div class=\"objectwrap\"><span class=\"thumb\"><img src =\"{{thumb}}\" alt=\"\" /></span><span class=\"title\"><a href=\"{{url}}\">{{title}}</a></span><span class=\"serialcode\">{{serialcode}}</span></div></div></td><td class=\"vui-datatable-col-price\"><div class=\"vui-datatable-inner\"><div class=\"objectwrap\">{{price}} rmb</div></div></td><td class=\"vui-datatable-col-operator\"><div class=\"vui-datatable-inner\"><div class=\"operatorwrap\"><a class=\"edit\" href=\"javascript: void(0)\">edit</a> <a class=\"delete\" href=\"javascript: void(0)\">delete</a></div></div></td>",
         "<td class=\"vui-datatable-col-status\"><div class=\"vui-datatable-inner\"><span class=\"status status-{{status}}\">{{statustext}}</span></div></td><td class=\"vui-datatable-col-subject\"><div class=\"vui-datatable-inner\"><div class=\"objectwrap\"><span class=\"thumb\"><img src =\"{{thumb}}\" alt=\"\" /></span><span class=\"title\"><a href=\"{{url}}\">{{title}}</a></span><span class=\"serialcode\">{{serialcode}}</span></div></div></td><td class=\"vui-datatable-col-price\"><div class=\"vui-datatable-inner\"><div class=\"objectwrap\"><input type=\"text\" value=\"{{price}}\" /> rmb</div></div></td><td class=\"vui-datatable-col-operator\"><div class=\"vui-datatable-inner\"><div class=\"operatorwrap\"><a class=\"save\" href=\"javascript: void(0)\">save</a> <a class=\"cancel\" href=\"javascript: void(0)\">cancel</a></div></div></td>"
     ],
-    "batch": "1",
+    "batch": 1,
     "items": {
         "14395": {
             "status": "success",

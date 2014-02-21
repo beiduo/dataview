@@ -250,7 +250,7 @@
                     }
                 });
             }
-        }
+        };
 
         opts.result.create(opts.items);
 
@@ -308,7 +308,49 @@
                     }
                 });
             }
-        }
+        };
+
+        //batch
+        opts.result.batch = function(url, attr){
+            var self = this;
+
+            var ids = $.map(self.items, function(item, i){
+                if (item.checked){
+                    return item.key;
+                }
+            }).split(',');
+
+            //get url
+            var url = (typeof url === 'string') ? url : '';
+            url = url || window.location.href || '';
+            if (url) {
+                // clean url (don't include hash value)
+                url = (url.match(/^([^#]+)/)||[])[1];
+            }
+
+            //get attr
+            var attr = (typeof attr === 'string') ? attr : 'ids';
+            var data = attr + '=' + ids;
+
+            //send request
+            $.ajax({
+                type: 'get',
+                url: url,
+                data: data,
+                dataType: 'json',
+                success: function(cb){
+                    var key, i, item;
+                    if (cb.status === 'success'){
+                        for (key in cb.items){
+                            item = self.items[key];
+                            if (typeof item === 'object'){
+                                item.render(cb.items[key]);
+                            }
+                        }
+                    }
+                }
+            });
+        };
 
         if (typeof extra.list === 'object'){
             for (key in extra.list){
