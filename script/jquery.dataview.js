@@ -272,13 +272,13 @@
         }
 
         //tracking items
-        opts.result.track = function(url, attr){
+        opts.result.track = function(x, y, z){
             var self = this;
 
             //if there are items need to be tracked
             if ($.isArray(self.tracking) && self.tracking.length > 0){
                 //get tracking url
-                var url = (typeof url === 'string') ? url : '';
+                var url = (typeof x === 'string') ? x : '';
                 url = url || window.location.href || '';
                 if (url) {
                     // clean url (don't include hash value)
@@ -286,8 +286,16 @@
                 }
 
                 //get attr
-                var attr = (typeof attr === 'string') ? attr : 'ids';
+                var attr = (typeof y === 'string') ? y : 'ids';
                 var data = attr + '=' + self.tracking.join(',');
+
+                //get callback function
+                var callback;
+                if (typeof y === 'function'){
+                    callback = y;
+                } else if (typeof z === 'function'){
+                    callback = z;
+                }
 
                 //send request
                 $.ajax({
@@ -298,10 +306,16 @@
                     success: function(cb){
                         var key, i, item;
                         if (cb.status === 'success'){
-                            for (key in cb.items){
-                                item = self.items[key];
-                                if (typeof item === 'object'){
-                                    item.render(cb.items[key]);
+                            if (typeof callback === 'function'){
+                                cb.items = callback(cb.items);
+                            }
+
+                            if (typeof cb.items === 'object'){
+                                for (key in cb.items){
+                                    item = self.items[key];
+                                    if (typeof item === 'object'){
+                                        item.render(cb.items[key]);
+                                    }
                                 }
                             }
                         }
@@ -311,7 +325,7 @@
         };
 
         //batch
-        opts.result.batch = function(url, attr){
+        opts.result.batch = function(x, y, z){
             var self = this;
 
             var ids = $.map(self.items, function(item, i){
@@ -321,7 +335,7 @@
             }).split(',');
 
             //get url
-            var url = (typeof url === 'string') ? url : '';
+            var url = (typeof x === 'string') ? x : '';
             url = url || window.location.href || '';
             if (url) {
                 // clean url (don't include hash value)
@@ -329,8 +343,16 @@
             }
 
             //get attr
-            var attr = (typeof attr === 'string') ? attr : 'ids';
+            var attr = (typeof y === 'string') ? y : 'ids';
             var data = attr + '=' + ids;
+
+            //get callback function
+            var callback;
+            if (typeof y === 'function'){
+                callback = y;
+            } else if (typeof z === 'function'){
+                callback = z;
+            }
 
             //send request
             $.ajax({
@@ -341,10 +363,16 @@
                 success: function(cb){
                     var key, i, item;
                     if (cb.status === 'success'){
-                        for (key in cb.items){
-                            item = self.items[key];
-                            if (typeof item === 'object'){
-                                item.render(cb.items[key]);
+                        if (typeof callback === 'function'){
+                            cb.items = callback(cb.items);
+                        }
+
+                        if (typeof cb.items === 'object'){
+                            for (key in cb.items){
+                                item = self.items[key];
+                                if (typeof item === 'object'){
+                                    item.render(cb.items[key]);
+                                }
                             }
                         }
                     }

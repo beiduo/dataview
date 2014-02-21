@@ -55,13 +55,22 @@ $.ajax({
                     var self = this;
 
                     var tracking = function(){
-                        self.track('data/track.json');
+                        dataTable.track('data/track.json', function(data){
+                            return data;
+                        });
                         setTimeout(tracking, 5000);
                     }
 
                     setTimeout(tracking, 5000);
                 }
-            }
+            },
+            buttons: [
+                {
+                    text: '删除',
+                    process: function(){
+                    }
+                }
+            ]
         });
 
         try { console.log(dataTable); } catch (e){}
