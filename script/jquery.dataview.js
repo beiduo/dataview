@@ -314,7 +314,7 @@
                                 for (key in cb.items){
                                     item = self.items[key];
                                     if (typeof item === 'object'){
-                                        item.render(cb.items[key]);
+                                        item.render(0, cb.items[key]);
                                     }
                                 }
                             }
@@ -378,6 +378,21 @@
                     }
                 }
             });
+        };
+
+        opts.result.batch2 = function(callback){
+            var self = this;
+
+            var items = $.map(self.items, function(item, i){
+                if (item.checked){
+                    return item;
+                }
+            });
+
+            //get callback function
+            if (typeof callback === 'function' && items.length > 0){
+                callback(items);
+            }
         };
 
         if (typeof extra.list === 'object'){

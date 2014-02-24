@@ -20,9 +20,7 @@ $.ajax({
         var dataTable = $('#container').dataView(data, {
             items: {
                 delete: function(){
-                    var self = this;
-                    self.node.parentNode.removeChild(self.node);
-                    return false;
+                    this.node.parentNode.removeChild(this.node);
                 },
                 event: function(){
                     var self = this;
@@ -30,11 +28,13 @@ $.ajax({
                     $(self.node).delegate('a', 'click', function(){
                         if ($(this).is('.delete')){
                             self.delete();
+                            return false;
                         } else if ($(this).is('.edit')){
-                            console.log(dataTable);
                             self.render(1);
+                            return false;
                         } else if ($(this).is('.cancel')){
                             self.render(0);
+                            return false;
                         } else if ($(this).is('.save')){
                             $.ajax({
                                 url: 'data/edit.json',
@@ -42,10 +42,11 @@ $.ajax({
                                 cache: false,
                                 success: function(data){
                                     if (data.status === 'success'){
-                                        self.render(0, data.data);
+                                        self.render(2, data.data);
                                     }
                                 }
                             });
+                            return false;
                         }
                     });
                 }
@@ -66,8 +67,34 @@ $.ajax({
             },
             buttons: [
                 {
-                    text: '删除',
+                    text: 'delete',
                     process: function(){
+                        if (confirm('are you sure you want to delete all the items that have been choosen?')){
+                            dataTable.batch2(function(items){
+                                for (var key in items){
+                                    if (typeof items[key].delete === 'function'){
+                                        items[key].delete();
+                                    }
+                                }
+                            });
+                        }
+                    }
+                },
+                {
+                    text: 'delete2',
+                    process: function(){
+                        if (confirm('are you sure you want to delete all the items that have been choosen?')){
+                            dataTable.batch2(function(items){
+                                for (var key in items){
+                                    if (typeof items[key].delete === 'function'){
+                                        items[key].render(2, {
+                                            status: 'tracking',
+                                            statusText: 'deleting'
+                                        });
+                                    }
+                                }
+                            });
+                        }
                     }
                 }
             ]
