@@ -87,18 +87,25 @@ $.ajax({
                     process: function(){
                         dataTable.batch({
                             before: function(items){
-                                 if (confirm('are you sure you want to delete all the items that have been choosen?')){
+                                if (confirm('are you sure you want to delete all the items that have been choosen?')){
                                     for (var key in items){
                                         items[key].render(2, {
                                             status: 'loading',
                                             statustext: 'deleting'
                                         });
                                     }
+                                    return true;
                                 } else {
                                     return false;
                                 }
                             },
                             url: 'data/batch.json',
+                            data: function(items){
+                                var ids = $.map(items, function(item, i){
+                                    return item.key;
+                                });
+                                return 'ids=' + ids.join(',');
+                            },
                             after: function(items){
                                 alert(item.length);
                                 return items;

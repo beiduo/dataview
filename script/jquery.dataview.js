@@ -377,9 +377,6 @@
 
                 //if x.url exists, send a XMLHttpRequest
                 if (typeof x.url === 'string'){
-                    var ids = $.map(items, function(item, i){
-                        return item.key;
-                    }).split(',');
 
                     //get url
                     x.url = x.url || window.location.href || '';
@@ -387,14 +384,16 @@
                         // clean url (don't include hash value)
                         x.url = (x.url.match(/^([^#]+)/)||[])[1];
                     }
-
-                    //get attr
-                    x.attr = (typeof x.attr === 'string') ? x.attr : 'ids';
-                    var data = x.attr + '=' + ids;
-
+                    //get data
+                    var data = '';
+                    if (typeof x.data === 'string'){
+                        data = x.data;
+                    } else if (typeof x.data === 'function'){
+                        data = x.data(items);
+                    }
                     //send request
                     $.ajax({
-                        type: 'get',
+                        type: 'post',
                         url: x.url,
                         data: data,
                         dataType: 'json',
