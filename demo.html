@@ -19,15 +19,12 @@ $.ajax({
     success: function(data){
         var dataTable = $('#container').dataView(data, {
             items: {
-                delete: function(){
-                    this.node.parentNode.removeChild(this.node);
-                },
                 event: function(){
                     var self = this;
 
                     $(self.node).delegate('a', 'click', function(){
                         if ($(this).is('.delete')){
-                            self.delete();
+                            self.destroy();
                             return false;
                         } else if ($(this).is('.edit')){
                             self.render(1);
@@ -75,8 +72,8 @@ $.ajax({
                         dataTable.batch(function(items){
                             if (confirm('are you sure you want to delete all the items that have been choosen?')){
                                 for (var key in items){
-                                    if (typeof items[key].delete === 'function'){
-                                        items[key].delete();
+                                    if (typeof items[key].destroy === 'function'){
+                                        items[key].destroy();
                                     }
                                 }
                             } else {

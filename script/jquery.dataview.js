@@ -165,6 +165,11 @@
                         self[fieldKey] = extend[fieldKey];
                     }
 
+                    //if need to destroy the item
+                    if (typeof self.destroy !== 'undefined' && Number(self.destroy) === 1){
+                        self.destroy();
+                    }
+
                     //add tracking item
                     if (self.status === 'tracking'){
                         if ($.isArray(selfList.tracking)){
@@ -217,6 +222,13 @@
                         });
                     }
                 }
+
+                //destroy this item
+                objRow.destroy = function(){
+                    this.node.parentNode.removeChild(this.node);
+                    var itemKey = this.key;
+                    delete selfList.items[itemKey];
+                },
 
                 objRow.render();
 
