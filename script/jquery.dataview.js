@@ -254,8 +254,27 @@
 
         opts.result.create(opts.items);
 
+        if (typeof extra.buttons === 'object' && extra.buttons.length){
+            var btnCtnr = document.createElement('div');
+            btnCtnr.className = 'vui-datatable-operator';
+            opts.result.buttons = $.map(extra.buttons, function(item){
+                var btn = {};
+                btn.node = document.createElement('button');
+                btn.node.innerHTML = item.text;
+                btn.process = item.process;
+                return btn;
+            });
+            for (i = 0; i < opts.result.buttons.length; i++){
+                btnCtnr.appendChild(opts.result.buttons[i].node);
+                $(opts.result.buttons[i].node).on('click', opts.result.buttons[i].process);
+            }
+        }
+
         for (i = 0; i < this.length; i++){
             this[i].appendChild(opts.result.container);
+            if (typeof btnCtnr !== 'undefined'){
+                this[i].appendChild(btnCtnr);
+            }
         }
 
         //if requires checkbox element
@@ -272,13 +291,15 @@
         }
 
         //tracking items
-        opts.result.track = function(x, y, z){
+        opts.result.track = function(x){
             var self = this;
+
+            if (typeof x !== 'object') return false;
 
             //if there are items need to be tracked
             if ($.isArray(self.tracking) && self.tracking.length > 0){
                 //get tracking url
-                var url = (typeof x === 'string') ? x : '';
+                var url = (typeof x.url === 'string') ? x.url : '';
                 url = url || window.location.href || '';
                 if (url) {
                     // clean url (don't include hash value)
@@ -286,16 +307,8 @@
                 }
 
                 //get attr
-                var attr = (typeof y === 'string') ? y : 'ids';
+                var attr = (typeof x.attr === 'string') ? x.attr : 'ids';
                 var data = attr + '=' + self.tracking.join(',');
-
-                //get callback function
-                var callback;
-                if (typeof y === 'function'){
-                    callback = y;
-                } else if (typeof z === 'function'){
-                    callback = z;
-                }
 
                 //send request
                 $.ajax({
@@ -306,8 +319,8 @@
                     success: function(cb){
                         var key, i, item;
                         if (cb.status === 'success'){
-                            if (typeof callback === 'function'){
-                                cb.items = callback(cb.items);
+                            if (typeof x.callback === 'function'){
+                                cb.items = x.callback(cb.items);
                             }
 
                             if (typeof cb.items === 'object'){
@@ -325,73 +338,74 @@
         };
 
         //batch
-        opts.result.batch = function(x, y, z){
+        opts.result.batch = function(x){
             var self = this;
 
-            var ids = $.map(self.items, function(item, i){
-                if (item.checked){
-                    return item.key;
-                }
-            }).split(',');
+            //invalid arguments
+            if (typeof x !== 'object' && typeof x !== 'function') return false;
 
-            //get url
-            var url = (typeof x === 'string') ? x : '';
-            url = url || window.location.href || '';
-            if (url) {
-                // clean url (don't include hash value)
-                url = (url.match(/^([^#]+)/)||[])[1];
-            }
-
-            //get attr
-            var attr = (typeof y === 'string') ? y : 'ids';
-            var data = attr + '=' + ids;
-
-            //get callback function
-            var callback;
-            if (typeof y === 'function'){
-                callback = y;
-            } else if (typeof z === 'function'){
-                callback = z;
-            }
-
-            //send request
-            $.ajax({
-                type: 'get',
-                url: url,
-                data: data,
-                dataType: 'json',
-                success: function(cb){
-                    var key, i, item;
-                    if (cb.status === 'success'){
-                        if (typeof callback === 'function'){
-                            cb.items = callback(cb.items);
-                        }
-
-                        if (typeof cb.items === 'object'){
-                            for (key in cb.items){
-                                item = self.items[key];
-                                if (typeof item === 'object'){
-                                    item.render(cb.items[key]);
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        };
-
-        opts.result.batch2 = function(callback){
-            var self = this;
-
+            //collect all items that have been choosen
             var items = $.map(self.items, function(item, i){
                 if (item.checked){
                     return item;
                 }
             });
 
-            //get callback function
-            if (typeof callback === 'function' && items.length > 0){
-                callback(items);
+            if (items.length < 1){
+                alert('please at least choose one item');
+                return;
+            }
+
+            //if arguments[0] is a function
+            if (typeof x === 'function'){
+                x(items);
+            } else {
+                //if x.before is a function, run it, if it returns false, then stop here
+                if (typeof x.before === 'function' && !x.before(items)) return false;
+
+                //if x.url exists, send a XMLHttpRequest
+                if (typeof x.url === 'string'){
+                    var ids = $.map(items, function(item, i){
+                        return item.key;
+                    }).split(',');
+
+                    //get url
+                    x.url = x.url || window.location.href || '';
+                    if (x.url) {
+                        // clean url (don't include hash value)
+                        x.url = (x.url.match(/^([^#]+)/)||[])[1];
+                    }
+
+                    //get attr
+                    x.attr = (typeof x.attr === 'string') ? x.attr : 'ids';
+                    var data = x.attr + '=' + ids;
+
+                    //send request
+                    $.ajax({
+                        type: 'get',
+                        url: x.url,
+                        data: data,
+                        dataType: 'json',
+                        success: function(cb){
+                            var key, i, item;
+                            if (cb.status === 'success'){
+                                //if x.after is a function, run it, if itself still returns all the items, the success function will continue
+                                if (typeof x.after === 'function'){
+                                    cb.items = x.after(cb.items);
+                                }
+
+                                if (typeof cb.items === 'object'){
+                                    for (key in cb.items){
+                                        item = self.items[key];
+                                        if (typeof item === 'object'){
+                                            item.render(cb.items[key]);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
             }
         };
 

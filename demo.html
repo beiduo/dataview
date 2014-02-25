@@ -56,8 +56,11 @@ $.ajax({
                     var self = this;
 
                     var tracking = function(){
-                        dataTable.track('data/track.json', function(data){
-                            return data;
+                        dataTable.track({
+                            url: 'data/track.json',
+                            callback: function(data){
+                                return data;
+                            }
                         });
                         setTimeout(tracking, 5000);
                     }
@@ -69,32 +72,41 @@ $.ajax({
                 {
                     text: 'delete',
                     process: function(){
-                        if (confirm('are you sure you want to delete all the items that have been choosen?')){
-                            dataTable.batch2(function(items){
+                        dataTable.batch(function(items){
+                            if (confirm('are you sure you want to delete all the items that have been choosen?')){
                                 for (var key in items){
                                     if (typeof items[key].delete === 'function'){
                                         items[key].delete();
                                     }
                                 }
-                            });
-                        }
+                            } else {
+                                return false;
+                            }
+                        });
                     }
                 },
                 {
                     text: 'delete2',
                     process: function(){
-                        if (confirm('are you sure you want to delete all the items that have been choosen?')){
-                            dataTable.batch2(function(items){
-                                for (var key in items){
-                                    if (typeof items[key].delete === 'function'){
+                        dataTable.batch({
+                            before: function(items){
+                                 if (confirm('are you sure you want to delete all the items that have been choosen?')){
+                                    for (var key in items){
                                         items[key].render(2, {
-                                            status: 'tracking',
-                                            statusText: 'deleting'
+                                            status: 'loading',
+                                            statustext: 'deleting'
                                         });
                                     }
+                                } else {
+                                    return false;
                                 }
-                            });
-                        }
+                            },
+                            url: 'data/batch.json',
+                            after: function(items){
+                                alert(item.length);
+                                return items;
+                            }
+                        });
                     }
                 }
             ]
