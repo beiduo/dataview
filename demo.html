@@ -134,7 +134,8 @@ $.ajax({
                             //注意：此处的items参数为ajax返回的数据的items子对象
                             //注意：如果此处仍然将items返回继续返回，则render()操作会继续被执行
                             after: function(items){
-                                alert(item.length);
+                                alert(typeof items);
+                                try { console.log(items); } catch(e){}
                                 return items;
                             }
                         });

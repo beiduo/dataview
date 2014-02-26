@@ -237,7 +237,7 @@ items为各项数据，属性值与模板变量名相对应。如果需要也可
                                 //注意：此处的items参数为ajax返回的数据的items子对象
                                 //注意：如果此处仍然将items返回继续返回，则render()操作会继续被执行
                                 after: function(items){
-                                    alert(item.length);
+                                    alert(items.length);
                                     return items;
                                 }
                             });
@@ -251,12 +251,15 @@ items为各项数据，属性值与模板变量名相对应。如果需要也可
 ###操作数据返回的形式
 ***
 
+注意：如果要删除某一条目，将其"deleted"属性设置为1即可
+
 ####全局操作或批量操作：
 
     {
         "status": "success",
         "items": {
             "943522": {
+                "deleted": 1,
                 ....
             },
             "943522": {
@@ -270,6 +273,7 @@ items为各项数据，属性值与模板变量名相对应。如果需要也可
     {
         "status": "success",
         "data": {
+            "deleted": 1，
             ...
         }
     }

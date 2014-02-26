@@ -166,7 +166,7 @@
                     }
 
                     //if need to destroy the item
-                    if (typeof self.destroy !== 'undefined' && Number(self.destroy) === 1){
+                    if (typeof self.deleted !== 'undefined' && Number(self.deleted) === 1){
                         self.destroy();
                     }
 
