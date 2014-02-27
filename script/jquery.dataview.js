@@ -9,8 +9,7 @@
 
     function nano(template, data) {
         return template.replace(/\{\{([\w\.]*)\}\}/g, function (str, key) {
-            var i;
-            var keys = key.split("."), v = data[keys.shift()];
+            var i, keys = key.split("."), v = data[keys.shift()];
             for (i = 0; i < keys.length; i += 1) {
                 v = v[keys[i]];
             }
@@ -22,32 +21,41 @@
         /*jslint browser:true */
         /*jslint devel: true */
         /*jslint node: true */
-        var i, key, obj, html, tpl;
-
         //If the param "data" is an object
         if (typeof data !== 'object') {
             throw new Error('the param should be an object');
         }
-
-        //Default options
-        var defaults = {
-            status: "unknown",
-            pagination: '1',
-            pages: '1',
-            batch: 0,
-            //final object
-            result: {
-                //tHead
-                cols: {},
-                //tBody
-                items: {}
-            }
-        };
-
-        //Mix the options with defaults
-        var opts = $.extend(defaults, data);
-
-        var extra = (typeof options === 'object') ? options : {};
+        
+        var i,
+            key,
+            obj,
+            html,
+            tpl,
+            //Default options
+            defaults = {
+                status: "unknown",
+                pagination: '1',
+                pages: '1',
+                batch: 0,
+                //final object
+                result: {
+                    //tHead
+                    cols: {},
+                    //tBody
+                    items: {}
+                }
+            },
+            //Mix the options with defaults
+            opts = $.extend(defaults, data),
+            extra = (typeof options === 'object') ? options : {},
+            col,
+            colwrap,
+            tHeadwrap,
+            tHeadCheckbox,
+            tHeadCheckboxInner,
+            tHeadCheckboxIpt,
+            tHead,
+            btnCtnr;
 
         opts.result.tpl = opts.tpl;
 
@@ -55,9 +63,6 @@
         opts.result.container = document.createElement('table');
         opts.result.container.className = 'vui-datatable';
         opts.result.container.style.width = "100%";
-
-        //create thead element
-        var col, colwrap;
 
         for (key in opts.cols) {
             if (opts.cols.hasOwnProperty(key)) {
@@ -83,14 +88,14 @@
             }
         }
 
-        var tHeadwrap = document.createElement('tr');
+        tHeadwrap = document.createElement('tr');
 
         if (Number(opts.batch) === 1) {
-            var tHeadCheckbox = document.createElement('th');
+            tHeadCheckbox = document.createElement('th');
             tHeadCheckbox.className = 'vui-datatable-col-check';
-            var tHeadCheckboxInner = document.createElement('div');
+            tHeadCheckboxInner = document.createElement('div');
             tHeadCheckboxInner.className = 'vui-datatable-inner';
-            var tHeadCheckboxIpt = document.createElement('input');
+            tHeadCheckboxIpt = document.createElement('input');
             tHeadCheckboxIpt.type = 'checkbox';
             opts.result.checkall = tHeadCheckboxIpt;
             tHeadCheckboxInner.appendChild(tHeadCheckboxIpt);
@@ -104,7 +109,7 @@
             }
         }
 
-        var tHead = document.createElement('thead');
+        tHead = document.createElement('thead');
         tHead.appendChild(tHeadwrap);
 
         opts.result.container.appendChild(tHead);
@@ -113,9 +118,107 @@
         opts.result.tBody = document.createElement('tbody');
 
         opts.result.create = function (dataItems) {
-            var row, objRow, rowCols, fields, i, key;
+            var row,
+                objRow,
+                rowCols,
+                fields,
+                i,
+                key,
+                render,
+                destroy,
+                selfList = this;
+            
+            render = function (x, y) {
+                var tpl,
+                    fieldKey,
+                    extend,
+                    checkbox,
+                    checkboxInner,
+                    checkboxIpt,
+                    self = this;
 
-            var selfList = this;
+                //if tpl mode or attributes already changed
+                if (typeof x === 'object') {
+                    extend = x;
+                } else if (typeof x === 'number') {
+                    self.mode = x;
+                    if (typeof y === 'object') {
+                        extend = y;
+                    }
+                } else {
+                    self.mode = 0;
+                }
+
+                //add new attributes
+                for (fieldKey in extend) {
+                    if (extend.hasOwnProperty(fieldKey)) {
+                        self[fieldKey] = extend[fieldKey];
+                    }
+                }
+
+                //if need to destroy the item
+                if (typeof self.deleted !== 'undefined' && Number(self.deleted) === 1) {
+                    self.destroy();
+                }
+
+                //add tracking item
+                if (self.status === 'tracking') {
+                    if ($.isArray(selfList.tracking)) {
+                        if ($.inArray(self.key, selfList.tracking) === -1) {
+                            selfList.tracking.push(self.key);
+                        }
+                    } else {
+                        selfList.tracking = [self.key];
+                    }
+                } else {
+                    if ($.isArray(selfList.tracking)) {
+                        if ($.inArray(self.key, selfList.tracking) > -1) {
+                            selfList.tracking = $.grep(selfList.tracking, function (n, i) {
+                                return n !== self.key;
+                            });
+                        }
+                    }
+                }
+
+                //remove current innerhtml
+                self.node.innerHTML = '';
+
+                //use the template engine to create new innerhtml
+                //for (key in self){
+                tpl = self.tpl[Number(self.mode)];
+
+                html = nano(tpl, self);
+
+                self.node.innerHTML = html;
+                //}
+
+                //if requires checkbox element
+                if (Number(opts.batch) === 1) {
+                    checkbox = document.createElement('td');
+                    checkbox.className = 'vui-datatable-col-check';
+                    checkboxInner = document.createElement('div');
+                    checkboxInner.className = 'vui-datatable-inner';
+                    checkboxIpt = document.createElement('input');
+                    checkboxIpt.type = 'checkbox';
+                    self.checkbox = checkboxIpt;
+                    checkboxInner.appendChild(checkboxIpt);
+                    checkbox.appendChild(checkboxInner);
+
+                    self.node.insertBefore(checkbox, self.node.firstChild);
+
+                    checkboxIpt.checked = self.checked;
+
+                    $(checkboxIpt).on('click', function () {
+                        self.checked = $(this)[0].checked;
+                    });
+                }
+            };
+            
+            destroy = function () {
+                this.node.parentNode.removeChild(this.node);
+                var itemKey = this.key;
+                delete selfList.items[itemKey];
+            };
 
             //remove all items
             selfList.tBody.innerHTML = '';
@@ -160,94 +263,10 @@
                     }
 
                     //render method
-                    objRow.render = function (x, y) {
-                        var tpl, self = this, fieldKey;
-
-                        var extend;
-
-                        //if tpl mode or attributes already changed
-                        if (typeof x === 'object') {
-                            extend = x;
-                        } else if (typeof x === 'number') {
-                            self.mode = x;
-                            if (typeof y === 'object') {
-                                extend = y;
-                            }
-                        } else {
-                            self.mode = 0;
-                        }
-
-                        //add new attributes
-                        for (fieldKey in extend) {
-                            if (extend.hasOwnProperty(fieldKey)) {
-                                self[fieldKey] = extend[fieldKey];
-                            }
-                        }
-
-                        //if need to destroy the item
-                        if (typeof self.deleted !== 'undefined' && Number(self.deleted) === 1) {
-                            self.destroy();
-                        }
-    
-                        //add tracking item
-                        if (self.status === 'tracking') {
-                            if ($.isArray(selfList.tracking)) {
-                                if ($.inArray(self.key, selfList.tracking) === -1) {
-                                    selfList.tracking.push(self.key);
-                                }
-                            } else {
-                                selfList.tracking = [self.key];
-                            }
-                        } else {
-                            if ($.isArray(selfList.tracking)) {
-                                if ($.inArray(self.key, selfList.tracking) > -1) {
-                                    selfList.tracking = $.grep(selfList.tracking, function (n, i) {
-                                        return n !== self.key;
-                                    });
-                                }
-                            }
-                        }
-    
-                        //remove current innerhtml
-                        self.node.innerHTML = '';
-    
-                        //use the template engine to create new innerhtml
-                        //for (key in self){
-                        tpl = self.tpl[Number(self.mode)];
-    
-                        html = nano(tpl, self);
-    
-                        self.node.innerHTML = html;
-                        //}
-    
-                        //if requires checkbox element
-                        if (Number(opts.batch) === 1) {
-                            var checkbox = document.createElement('td');
-                            checkbox.className = 'vui-datatable-col-check';
-                            var checkboxInner = document.createElement('div');
-                            checkboxInner.className = 'vui-datatable-inner';
-                            var checkboxIpt = document.createElement('input');
-                            checkboxIpt.type = 'checkbox';
-                            self.checkbox = checkboxIpt;
-                            checkboxInner.appendChild(checkboxIpt);
-                            checkbox.appendChild(checkboxInner);
-    
-                            self.node.insertBefore(checkbox, self.node.firstChild);
-    
-                            checkboxIpt.checked = self.checked;
-    
-                            $(checkboxIpt).on('click', function () {
-                                self.checked = $(this)[0].checked;
-                            });
-                        }
-                    };
+                    objRow.render = render;
     
                     //destroy this item
-                    objRow.destroy = function () {
-                        this.node.parentNode.removeChild(this.node);
-                        var itemKey = this.key;
-                        delete selfList.items[itemKey];
-                    };
+                    objRow.destroy = destroy;
     
                     objRow.render();
     
@@ -285,8 +304,6 @@
         };
 
         opts.result.create(opts.items);
-        
-        var btnCtnr;
 
         if (typeof extra.buttons === 'object' && extra.buttons.length) {
             btnCtnr = document.createElement('div');
@@ -314,8 +331,8 @@
         //if requires checkbox element
         if (Number(opts.batch) === 1 && typeof opts.result.checkall !== 'undefined') {
             $(opts.result.checkall).on('click', function () {
-                var key;
-                var checked = $(this)[0].checked;
+                var key,
+                    checked = $(this)[0].checked;
                 for (key in opts.result.items) {
                     if (opts.result.items.hasOwnProperty(key)) {
                         if (typeof opts.result.items[key].checkbox !== 'undefined' && !opts.result.items[key].checkbox.disabled) {
@@ -338,22 +355,21 @@
             //if there are items need to be tracked
             if ($.isArray(self.tracking) && self.tracking.length > 0) {
                 //get tracking url
-                var url = (typeof x.url === 'string') ? x.url : '';
-                url = url || window.location.href || '';
-                if (url) {
+                x.url = (typeof x.url === 'string') ? x.url : '';
+                x.url = x.url || window.location.href || '';
+                if (x.url) {
                     // clean url (don't include hash value)
-                    url = (url.match(/^([^#]+)/) || [])[1];
+                    x.url = (x.url.match(/^([^#]+)/) || [])[1];
                 }
 
                 //get attr
-                var attr = (typeof x.attr === 'string') ? x.attr : 'ids';
-                var data = attr + '=' + self.tracking.join(',');
+                x.attr = (typeof x.attr === 'string') ? x.attr : 'ids';
 
                 //send request
                 $.ajax({
                     type: 'get',
-                    url: url,
-                    data: data,
+                    url: x.url,
+                    data: x.attr + '=' + self.tracking.join(','),
                     dataType: 'json',
                     success: function (cb) {
                         var key, i, item;
@@ -380,7 +396,9 @@
 
         //batch
         opts.result.batch = function (x) {
-            var self = this;
+            var self = this,
+                items,
+                data;
 
             //invalid arguments
             if (typeof x !== 'object' && typeof x !== 'function') {
@@ -388,7 +406,7 @@
             }
 
             //collect all items that have been choosen
-            var items = $.map(self.items, function (item, i) {
+            items = $.map(self.items, function (item, i) {
                 if (item.checked) {
                     return item;
                 }
@@ -418,7 +436,7 @@
                         x.url = (x.url.match(/^([^#]+)/) || [])[1];
                     }
                     //get data
-                    var data = '';
+                    data = '';
                     if (typeof x.data === 'string') {
                         data = x.data;
                     } else if (typeof x.data === 'function') {
@@ -470,4 +488,4 @@
         return opts.result;
 
     };
-})(jQuery);
+}(jQuery));
