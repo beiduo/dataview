@@ -76,6 +76,7 @@ event()：通常用于单个列表项目的事件处理，在单个列表项生�
 
     {
         "status": "success",
+        "tagname": "table",
         "cols": {
             "status": {
                 "name": "status"
@@ -103,6 +104,8 @@ event()：通常用于单个列表项目的事件处理，在单个列表项生�
             },
             "...": {...        }
     }
+
+如果输出tagname为table，将会使用table系列标签来构建视图，否则将直接使用div
 
 cols为表头，在这一简化版中，仅仅用来设置表头的dom节点，没有其他关联了。键值为classname，name属性则为表头文本
 
