@@ -1,5 +1,6 @@
 {
     "status": "success",
+    "tagname": "table",
     "cols": {
         "status": {
             "name": "status"

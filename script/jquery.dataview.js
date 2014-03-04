@@ -2,11 +2,12 @@
  * Jquery dataView plugin
  * Author: mail@vincesnow.com
  */
-//Template engine
+
 
 (function ($) {
     "use strict";
 
+    //Template engine
     function nano(template, data) {
         return template.replace(/\{\{([\w\.]*)\}\}/g, function (str, key) {
             var i, keys = key.split("."), v = data[keys.shift()];
@@ -58,9 +59,11 @@
             btnCtnr;
 
         opts.result.tpl = opts.tpl;
+        
+        opts.tagname = opts.tagname || 'div';
 
         //create table element
-        opts.result.container = document.createElement('table');
+        opts.result.container = document.createElement(opts.tagname);
         opts.result.container.className = 'vui-datatable';
         opts.result.container.style.width = "100%";
 
@@ -70,8 +73,12 @@
     
                 obj.type = key;
     
-                col = document.createElement('th');
-                col.className = 'vui-datatable-col-' + obj.type;
+                if (opts.tagname === 'table') {
+                    col = document.createElement('th');
+                } else {
+                    col = document.createElement('div');
+                }
+                col.className = 'vui-datatable-col vui-datatable-col-' + obj.type;
     
                 colwrap = document.createElement('div');
                 colwrap.className = 'vui-datatable-inner';
@@ -88,11 +95,20 @@
             }
         }
 
-        tHeadwrap = document.createElement('tr');
+        if (opts.tagname === 'table') {
+            tHeadwrap = document.createElement('tr');
+        } else {
+            tHeadwrap = document.createElement('div');
+        }
+        tHeadwrap.className = 'vui-datatable-tr';
 
         if (Number(opts.batch) === 1) {
-            tHeadCheckbox = document.createElement('th');
-            tHeadCheckbox.className = 'vui-datatable-col-check';
+            if (opts.tagname === 'table') {
+                tHeadCheckbox = document.createElement('th');
+            } else {
+                tHeadCheckbox = document.createElement('div');
+            }
+            tHeadCheckbox.className = 'vui-datatable-col vui-datatable-col-check';
             tHeadCheckboxInner = document.createElement('div');
             tHeadCheckboxInner.className = 'vui-datatable-inner';
             tHeadCheckboxIpt = document.createElement('input');
@@ -109,13 +125,23 @@
             }
         }
 
-        tHead = document.createElement('thead');
+        if (opts.tagname === 'table') {
+            tHead = document.createElement('thead');
+        } else {
+            tHead = document.createElement('div');
+        }
+        tHead.className = 'vui-datatable-thead';
         tHead.appendChild(tHeadwrap);
 
         opts.result.container.appendChild(tHead);
 
         //create tbody element
-        opts.result.tBody = document.createElement('tbody');
+        if (opts.tagname === 'table') {
+            opts.result.tBody = document.createElement('tbody');
+        } else {
+            opts.result.tBody = document.createElement('div');
+        }
+        opts.result.tBody.className = 'vui-datatable-tbody';
 
         opts.result.create = function (dataItems) {
             var row,
@@ -194,8 +220,12 @@
 
                 //if requires checkbox element
                 if (Number(opts.batch) === 1) {
-                    checkbox = document.createElement('td');
-                    checkbox.className = 'vui-datatable-col-check';
+                    if (opts.tagname === 'table') {
+                        checkbox = document.createElement('td');
+                    } else {
+                        checkbox = document.createElement('div');
+                    }
+                    checkbox.className = 'vui-datatable-col vui-datatable-col-check';
                     checkboxInner = document.createElement('div');
                     checkboxInner.className = 'vui-datatable-inner';
                     checkboxIpt = document.createElement('input');
@@ -228,7 +258,12 @@
                 if (dataItems.hasOwnProperty(i)) {
                     objRow = dataItems[i];
 
-                    row = document.createElement('tr');
+                    if (opts.tagname === 'table') {
+                        row = document.createElement('tr');
+                    } else {
+                        row = document.createElement('div');
+                    }
+                    row.className = 'vui-datatable-tr';
                     row.setAttribute('data-id', i);
 
                     objRow.mode = 0;
@@ -269,7 +304,7 @@
                     objRow.destroy = destroy;
     
                     objRow.render();
-    
+
                     selfList.items[i] = objRow;
     
                     //add new item
