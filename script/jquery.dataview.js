@@ -250,8 +250,13 @@
                 delete selfList.items[itemKey];
             };
 
+            //destroy all items
+            
+            
             //remove all items
             selfList.tBody.innerHTML = '';
+            
+            selfList.items = {};
 
             //create each items
             for (i in dataItems) {
@@ -331,6 +336,7 @@
                     dataType: 'json',
                     success: function (cb) {
                         if (cb.status === 'success') {
+                            
                             opts.result.create(cb.items);
                         }
                     }
