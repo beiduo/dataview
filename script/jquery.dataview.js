@@ -2,185 +2,525 @@
  * Jquery dataView plugin
  * Author: mail@vincesnow.com
  */
-(function($){
-    $.fn.dataView = function(data, options){
-        var  i, key, obj, html, tpl;
 
-        function nano(template, data) {
-            return template.replace(/\{\{([\w\.]*)\}\}/g, function(str, key) {
-                var keys = key.split("."), v = data[keys.shift()];
-                for (var i = 0, l = keys.length; i < l; i++) v = v[keys[i]];
-                return (typeof v !== "undefined" && v !== null) ? v : "";
+
+(function ($) {
+    "use strict";
+
+    //Template engine
+    function nano(template, data) {
+        return template.replace(/\{\{([\w\.]*)\}\}/g, function (str, key) {
+            var i, keys = key.split("."), v = data[keys.shift()];
+            for (i = 0; i < keys.length; i += 1) {
+                v = v[keys[i]];
+            }
+            return (typeof v !== "undefined" && v !== null) ? v : "";
+        });
+    }
+
+    $.fn.dataView = function (data, options) {
+        /*jslint browser:true */
+        /*jslint devel: true */
+        /*jslint node: true */
+        //If the param "data" is an object
+        if (typeof data !== 'object') {
+            throw new Error('the param should be an object');
+        }
+        
+        var i,
+            key,
+            obj,
+            html,
+            tpl,
+            //Default options
+            defaults = {
+                status: "unknown",
+                pagination: '1',
+                pages: '1',
+                batch: 0,
+                //final object
+                result: {
+                    //tHead
+                    cols: {},
+                    //tBody
+                    items: {}
+                }
+            },
+            //Mix the options with defaults
+            opts = $.extend(defaults, data),
+            extra = (typeof options === 'object') ? options : {},
+            col,
+            colwrap,
+            tHeadwrap,
+            tHeadCheckbox,
+            tHeadCheckboxInner,
+            tHeadCheckboxIpt,
+            tHead,
+            btnCtnr;
+
+        opts.result.tpl = opts.tpl;
+        
+        opts.tagname = opts.tagname || 'div';
+
+        //create table element
+        opts.result.container = document.createElement(opts.tagname);
+        opts.result.container.className = 'vui-datatable';
+        opts.result.container.style.width = "100%";
+
+        for (key in opts.cols) {
+            if (opts.cols.hasOwnProperty(key)) {
+                obj = {};
+    
+                obj.type = key;
+    
+                if (opts.tagname === 'table') {
+                    col = document.createElement('th');
+                } else {
+                    col = document.createElement('div');
+                }
+                col.className = 'vui-datatable-col vui-datatable-col-' + obj.type;
+    
+                colwrap = document.createElement('div');
+                colwrap.className = 'vui-datatable-inner';
+    
+                html = opts.cols[key].name;
+    
+                colwrap.innerHTML = html;
+    
+                col.appendChild(colwrap);
+    
+                obj.node = col;
+    
+                opts.result.cols[key] = obj;
+            }
+        }
+
+        if (opts.tagname === 'table') {
+            tHeadwrap = document.createElement('tr');
+        } else {
+            tHeadwrap = document.createElement('div');
+        }
+        tHeadwrap.className = 'vui-datatable-tr';
+
+        if (Number(opts.batch) === 1) {
+            if (opts.tagname === 'table') {
+                tHeadCheckbox = document.createElement('th');
+            } else {
+                tHeadCheckbox = document.createElement('div');
+            }
+            tHeadCheckbox.className = 'vui-datatable-col vui-datatable-col-check';
+            tHeadCheckboxInner = document.createElement('div');
+            tHeadCheckboxInner.className = 'vui-datatable-inner';
+            tHeadCheckboxIpt = document.createElement('input');
+            tHeadCheckboxIpt.type = 'checkbox';
+            opts.result.checkall = tHeadCheckboxIpt;
+            tHeadCheckboxInner.appendChild(tHeadCheckboxIpt);
+            tHeadCheckbox.appendChild(tHeadCheckboxInner);
+            tHeadwrap.appendChild(tHeadCheckbox);
+        }
+
+        for (key in opts.result.cols) {
+            if (opts.result.cols.hasOwnProperty(key)) {
+                tHeadwrap.appendChild(opts.result.cols[key].node);
+            }
+        }
+
+        if (opts.tagname === 'table') {
+            tHead = document.createElement('thead');
+        } else {
+            tHead = document.createElement('div');
+        }
+        tHead.className = 'vui-datatable-thead';
+        tHead.appendChild(tHeadwrap);
+
+        opts.result.container.appendChild(tHead);
+
+        //create tbody element
+        if (opts.tagname === 'table') {
+            opts.result.tBody = document.createElement('tbody');
+        } else {
+            opts.result.tBody = document.createElement('div');
+        }
+        opts.result.tBody.className = 'vui-datatable-tbody';
+
+        opts.result.create = function (dataItems) {
+            var row,
+                objRow,
+                rowCols,
+                fields,
+                i,
+                key,
+                render,
+                destroy,
+                selfList = this;
+            
+            render = function (x, y) {
+                var tpl,
+                    fieldKey,
+                    extend,
+                    checkbox,
+                    checkboxInner,
+                    checkboxIpt,
+                    self = this;
+
+                //if tpl mode or attributes already changed
+                if (typeof x === 'object') {
+                    extend = x;
+                } else if (typeof x === 'number') {
+                    self.mode = x;
+                    if (typeof y === 'object') {
+                        extend = y;
+                    }
+                } else {
+                    self.mode = 0;
+                }
+
+                //add new attributes
+                for (fieldKey in extend) {
+                    if (extend.hasOwnProperty(fieldKey)) {
+                        self[fieldKey] = extend[fieldKey];
+                    }
+                }
+
+                //if need to destroy the item
+                if (typeof self.deleted !== 'undefined' && Number(self.deleted) === 1) {
+                    self.destroy();
+                }
+
+                //add tracking item
+                if (self.status === 'tracking') {
+                    if ($.isArray(selfList.tracking)) {
+                        if ($.inArray(self.key, selfList.tracking) === -1) {
+                            selfList.tracking.push(self.key);
+                        }
+                    } else {
+                        selfList.tracking = [self.key];
+                    }
+                } else {
+                    if ($.isArray(selfList.tracking)) {
+                        if ($.inArray(self.key, selfList.tracking) > -1) {
+                            selfList.tracking = $.grep(selfList.tracking, function (n, i) {
+                                return n !== self.key;
+                            });
+                        }
+                    }
+                }
+
+                //remove current innerhtml
+                self.node.innerHTML = '';
+
+                //use the template engine to create new innerhtml
+                //for (key in self){
+                tpl = self.tpl[Number(self.mode)];
+
+                html = nano(tpl, self);
+
+                self.node.innerHTML = html;
+                //}
+
+                //if requires checkbox element
+                if (Number(opts.batch) === 1) {
+                    if (opts.tagname === 'table') {
+                        checkbox = document.createElement('td');
+                    } else {
+                        checkbox = document.createElement('div');
+                    }
+                    checkbox.className = 'vui-datatable-col vui-datatable-col-check';
+                    checkboxInner = document.createElement('div');
+                    checkboxInner.className = 'vui-datatable-inner';
+                    checkboxIpt = document.createElement('input');
+                    checkboxIpt.type = 'checkbox';
+                    self.checkbox = checkboxIpt;
+                    checkboxInner.appendChild(checkboxIpt);
+                    checkbox.appendChild(checkboxInner);
+
+                    self.node.insertBefore(checkbox, self.node.firstChild);
+
+                    checkboxIpt.checked = self.checked;
+
+                    $(checkboxIpt).on('click', function () {
+                        self.checked = $(this)[0].checked;
+                    });
+                }
+            };
+            
+            destroy = function () {
+                this.node.parentNode.removeChild(this.node);
+                var itemKey = this.key;
+                delete selfList.items[itemKey];
+            };
+
+            //remove all items
+            selfList.tBody.innerHTML = '';
+
+            //create each items
+            for (i in dataItems) {
+                if (dataItems.hasOwnProperty(i)) {
+                    objRow = dataItems[i];
+
+                    if (opts.tagname === 'table') {
+                        row = document.createElement('tr');
+                    } else {
+                        row = document.createElement('div');
+                    }
+                    row.className = 'vui-datatable-tr';
+                    row.setAttribute('data-id', i);
+
+                    objRow.mode = 0;
+
+                    objRow.tpl = [];
+                    if (typeof opts.tpl === 'string') {
+                        objRow.tpl[0] = opts.tpl;
+                    } else {
+                        objRow.tpl = opts.tpl;
+                    }
+
+                    for (key in dataItems[i]) {
+                        if (dataItems[i].hasOwnProperty(key)) {
+                            objRow[key] = dataItems[i][key];
+                        }
+                    }
+
+                    objRow.node = row;
+
+                    objRow.key = i;
+
+                    if (typeof extra.items === 'object') {
+                        for (key in extra.items) {
+                            if (extra.items.hasOwnProperty(key)) {
+                                objRow[key] = extra.items[key];
+                            }
+                        }
+                    }
+
+                    if (typeof objRow.event === 'function') {
+                        objRow.event();
+                    }
+
+                    //render method
+                    objRow.render = render;
+    
+                    //destroy this item
+                    objRow.destroy = destroy;
+    
+                    objRow.render();
+
+                    selfList.items[i] = objRow;
+    
+                    //add new item
+                    selfList.tBody.appendChild(selfList.items[i].node);
+                }
+            }
+
+            selfList.container.appendChild(selfList.tBody);
+
+            //reload
+            selfList.reload = function (url) {
+                //get url
+                url = (typeof url === 'string') ? url : '';
+                url = url || window.location.href || '';
+                if (url) {
+                    // clean url (don't include hash value)
+                    url = (url.match(/^([^#]+)/) || [])[1];
+                }
+
+                //send request
+                $.ajax({
+                    type: 'get',
+                    url: url,
+                    dataType: 'json',
+                    success: function (cb) {
+                        if (cb.status === 'success') {
+                            opts.result.create(cb.items);
+                        }
+                    }
+                });
+            };
+        };
+
+        opts.result.create(opts.items);
+
+        if (typeof extra.buttons === 'object' && extra.buttons.length) {
+            btnCtnr = document.createElement('div');
+            btnCtnr.className = 'vui-datatable-operator';
+            opts.result.buttons = $.map(extra.buttons, function (item) {
+                var btn = {};
+                btn.node = document.createElement('button');
+                btn.node.innerHTML = item.text;
+                btn.process = item.process;
+                return btn;
+            });
+            for (i = 0; i < opts.result.buttons.length; i += 1) {
+                btnCtnr.appendChild(opts.result.buttons[i].node);
+                $(opts.result.buttons[i].node).on('click', opts.result.buttons[i].process);
+            }
+        }
+
+        for (i = 0; i < this.length; i += 1) {
+            this[i].appendChild(opts.result.container);
+            if (btnCtnr.innerHTML) {
+                this[i].appendChild(btnCtnr);
+            }
+        }
+
+        //if requires checkbox element
+        if (Number(opts.batch) === 1 && typeof opts.result.checkall !== 'undefined') {
+            $(opts.result.checkall).on('click', function () {
+                var key,
+                    checked = $(this)[0].checked;
+                for (key in opts.result.items) {
+                    if (opts.result.items.hasOwnProperty(key)) {
+                        if (typeof opts.result.items[key].checkbox !== 'undefined' && !opts.result.items[key].checkbox.disabled) {
+                            opts.result.items[key].checkbox.checked = checked;
+                            opts.result.items[key].checked = checked;
+                        }
+                    }
+                }
             });
         }
 
-        //If the param "data" is an object
-        if (typeof data !== 'object'){
-            throw new Error('the param should be an object');
-            return false;
-        }
+        //tracking items
+        opts.result.track = function (x) {
+            var self = this;
 
-        //Default options
-        var defaults = {
-            status: "unknown",
-            pagination: '1',
-            pages: '1',
-            //final object
-            result: {
-                //tHead
-                cols: {},
-                //tBody
-                items: {}
+            if (typeof x !== 'object') {
+                return false;
+            }
+
+            //if there are items need to be tracked
+            if ($.isArray(self.tracking) && self.tracking.length > 0) {
+                //get tracking url
+                x.url = (typeof x.url === 'string') ? x.url : '';
+                x.url = x.url || window.location.href || '';
+                if (x.url) {
+                    // clean url (don't include hash value)
+                    x.url = (x.url.match(/^([^#]+)/) || [])[1];
+                }
+
+                //get attr
+                x.attr = (typeof x.attr === 'string') ? x.attr : 'ids';
+
+                //send request
+                $.ajax({
+                    type: 'get',
+                    url: x.url,
+                    data: x.attr + '=' + self.tracking.join(','),
+                    dataType: 'json',
+                    success: function (cb) {
+                        var key, i, item;
+                        if (cb.status === 'success') {
+                            if (typeof x.callback === 'function') {
+                                cb.items = x.callback(cb.items);
+                            }
+
+                            if (typeof cb.items === 'object') {
+                                for (key in cb.items) {
+                                    if (cb.items.hasOwnProperty(key)) {
+                                        item = self.items[key];
+                                        if (typeof item === 'object') {
+                                            item.render(0, cb.items[key]);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
             }
         };
 
-        //Mix the options with defaults
-        var opts = $.extend(defaults, data);
+        //batch
+        opts.result.batch = function (x) {
+            var self = this,
+                items,
+                data;
 
-        var extra = (typeof options === 'object') ? options: {};
+            //invalid arguments
+            if (typeof x !== 'object' && typeof x !== 'function') {
+                return false;
+            }
 
-        //create table element
-        var container = document.createElement('table');
-        container.className = 'vui-datatable';
-        container.style.width = "100%";
+            //collect all items that have been choosen
+            items = $.map(self.items, function (item, i) {
+                if (item.checked) {
+                    return item;
+                }
+            });
 
-        //create thead element
-        var col, colwrap;
+            if (items.length < 1) {
+                alert('please at least choose one item');
+                return;
+            }
 
-        for (key in opts.cols){
-            obj = {};
+            //if arguments[0] is a function
+            if (typeof x === 'function') {
+                x(items);
+            } else {
+                //if x.before is a function, run it, if it returns false, then stop here
+                if (typeof x.before === 'function' && !x.before(items)) {
+                    return false;
+                }
 
-            obj.tpl = opts.cols[key].tpl || '{{value}}';
-            obj.padding = opts.cols[key].padding || '0';
-            obj.align = opts.cols[key].align || 'left';
-            obj.vlign = opts.cols[key].vlign || 'top';
-            obj.type = key;
+                //if x.url exists, send a XMLHttpRequest
+                if (typeof x.url === 'string') {
 
-            col = document.createElement('th');
-            col.className = 'vui-datatable-col-' + obj.type;
-            col.style.textAlign = obj.align;
-            col.style.verticalAlign = obj.vlign;
+                    //get url
+                    x.url = x.url || window.location.href || '';
+                    if (x.url) {
+                        // clean url (don't include hash value)
+                        x.url = (x.url.match(/^([^#]+)/) || [])[1];
+                    }
+                    //get data
+                    data = '';
+                    if (typeof x.data === 'string') {
+                        data = x.data;
+                    } else if (typeof x.data === 'function') {
+                        data = x.data(items);
+                    }
+                    //send request
+                    $.ajax({
+                        type: 'post',
+                        url: x.url,
+                        data: data,
+                        dataType: 'json',
+                        success: function (cb) {
+                            var key, i, item;
+                            if (cb.status === 'success') {
+                                //if x.after is a function, run it, if itself still returns all the items, the success function will continue
+                                if (typeof x.after === 'function') {
+                                    cb.items = x.after(cb.items);
+                                }
 
-            colwrap = document.createElement('div');
-            colwrap.className = 'vui-datatable-inner';
-            colwrap.style.padding = obj.padding;
+                                if (typeof cb.items === 'object') {
+                                    for (key in cb.items) {
+                                        if (cb.items.hasOwnProperty(key)) {
+                                            item = self.items[key];
+                                            if (typeof item === 'object') {
+                                                item.render(cb.items[key]);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+        };
 
-            html = opts.cols[key].name;
-
-            colwrap.innerHTML = html;
-
-            col.appendChild(colwrap);
-
-            obj.node = col;
-
-            opts.result.cols[key] = obj;
+        if (typeof extra.list === 'object') {
+            for (key in extra.list) {
+                if (extra.list.hasOwnProperty(key)) {
+                    opts.result[key] = extra.list[key];
+                }
+            }
         }
 
-        var tHeadwrap = document.createElement('tr');
-
-        for (key in opts.result.cols){
-            tHeadwrap.appendChild(opts.result.cols[key].node);
-        }
-
-        var tHead = document.createElement('thead');
-        tHead.appendChild(tHeadwrap);
-
-        container.appendChild(tHead);
-
-        //create tbody element
-        var row, objRow, rowCols, fields, tBody = document.createElement('tbody');
-
-        for (i in opts.items){
-            objRow = {
-                id: i,
-                cols: {}
-            };
-
-            row = document.createElement('tr');
-            row.setAttribute('data-id', opts.items[i].id);
-
-            fields = opts.items[i].fields;
-
-            for (num in fields){
-                obj = {}
-
-                obj.type = opts.result.cols[num].type;
-                obj.tpl = opts.result.cols[num].tpl;
-                obj.align = opts.result.cols[num].align;
-                obj.vlign = opts.result.cols[num].vlign;
-                obj.padding = opts.result.cols[num].padding;
-
-                obj.tpl = [];
-                if (typeof opts.result.cols[num].tpl === 'string'){
-                    obj.tpl[0] = opts.result.cols[num].tpl;
-                } else {
-                    obj.tpl = opts.result.cols[num].tpl;
-                }
-
-                obj.mode = '0';
-
-                for (key in fields[num]){
-                    obj[key] = fields[num][key];
-                }
-
-                objRow.cols[num] = obj
-            }
-
-            objRow.node = row;
-
-            if (typeof extra.items === 'object'){
-                for (key in extra.items){
-                    objRow[key] = extra.items[key];
-                }
-            }
-
-            if (typeof objRow.event === 'function'){
-                objRow.event();
-            }
-
-            objRow.render = function(){
-                var self = this;
-
-                self.node.innerHTML = '';
-
-                for (key in self.cols){
-                    col = document.createElement('td');
-                    col.className = 'vui-datatable-col-' + self.cols[key].type;
-                    col.style.textAlign = self.cols[key].align;
-                    col.style.verticalAlign = self.cols[key].vlign;
-
-                    colwrap = document.createElement('div');
-                    colwrap.className = 'vui-datatable-inner';
-                    colwrap.style.padding = self.cols[key].padding;
-
-                    tpl = self.cols[key].tpl[Number(self.cols[key].mode)];
-
-                    html = nano(tpl, self.cols[key]);
-
-                    colwrap.innerHTML = html;
-
-                    col.appendChild(colwrap);
-
-                    self.cols[key].node = col;
-
-                    self.node.appendChild(self.cols[key].node);
-                }
-            }
-
-            objRow.render();
-
-            opts.result.items[i] = objRow;
-
-            tBody.appendChild(objRow.node);
-        }
-
-        container.appendChild(tBody);
-
-        for (i = 0; i < this.length; i++){
-            this[i].appendChild(container);
+        if (typeof opts.result.event === 'function') {
+            opts.result.event();
         }
 
         return opts.result;
 
-    }
-})(jQuery);
+    };
+}(jQuery));

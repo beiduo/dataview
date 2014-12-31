@@ -12,33 +12,34 @@
 <script type="text/javascript">
 //<![CDATA[
 
+//先通过AJAX获取数据
 $.ajax({
     url: 'data/data.json',
     dataType: 'json',
     cache: false,
     success: function(data){
+        //调用jquery对象的dataview方法
         var dataTable = $('#container').dataView(data, {
+            //items中包含的属性和方法将会被自动添加到每个数据条目的对象中
+            //此处的优先级为最高
+            //注意这里定义的方法函数，上下文对象指向的是进行调用的数据条目
             items: {
-                delete: function(){
-                    var self = this;
-                    self.node.parentNode.removeChild(self.node);
-                    return false;
-                },
+                //event函数将在数据条目生成后自动执行
                 event: function(){
                     var self = this;
 
+                    //在这里可以进行一些事件监听
+                    //视图的更改都要通过数据的变更和模板的切换来实现，直接更改dom节点是错误的
                     $(self.node).delegate('a', 'click', function(){
                         if ($(this).is('.delete')){
-
-                            self.delete();
+                            self.destroy();
+                            return false;
                         } else if ($(this).is('.edit')){
-                            self.cols.price.mode = '1';
-                            self.cols.operator.mode = '1';
-                            self.render();
+                            self.render(1);
+                            return false;
                         } else if ($(this).is('.cancel')){
-                            self.cols.price.mode = '0';
-                            self.cols.operator.mode = '0';
-                            self.render();
+                            self.render(0);
+                            return false;
                         } else if ($(this).is('.save')){
                             $.ajax({
                                 url: 'data/edit.json',
@@ -46,28 +47,104 @@ $.ajax({
                                 cache: false,
                                 success: function(data){
                                     if (data.status === 'success'){
-                                        var cb = data.data, field, i;
-                                        for (var key in cb){
-                                            field = self.cols[key];
-                                            for (i in cb[key]){
-                                                field[i] = cb[key][i];
-                                            }
-                                        }
-                                        self.cols.price.mode = '0';
-                                        self.cols.operator.mode = '0';
-                                        self.render();
+                                        self.render(2, data.data);
                                     }
                                 }
                             });
+                            return false;
                         }
                     });
                 }
-            }
-        });
+            },
+            //items中包含的属性和方法将会被自动添加到总对象中
+            //此处的优先级为最高
+            //注意这里定义的方法函数，上下文对象指向的是总对象
+            list: {
+                event: function(){
+                    var self = this;
 
-        try { console.log(dataTable); } catch (e){}
+                    //建立状态跟踪
+                    //track()参数设置方法见后面的说明
+                    var tracking = function(){
+                        dataTable.track({
+                            url: 'data/track.json',
+                            callback: function(data){
+                                return data;
+                            }
+                        });
+                        setTimeout(tracking, 5000);
+                    }
+
+                    setTimeout(tracking, 5000);
+                }
+            },
+            //设置按钮
+            buttons: [
+                {
+                    //按钮文本
+                    text: 'delete',
+                    //按钮点击事件函数，注意这里的上下文对象指向的是按钮的dom节点
+                    process: function(){
+                        //这是一个比较简单的批处理调用，仅设置一个回调函数作为参数
+                        //items为被标记为checked的数据条目集合
+                        dataTable.batch(function(items){
+                            if (confirm('are you sure you want to delete all the items that have been choosen?')){
+                                for (var key in items){
+                                    if (typeof items[key].destroy === 'function'){
+                                        items[key].destroy();
+                                    }
+                                }
+                            } else {
+                                return false;
+                            }
+                        });
+                    }
+                },
+                {
+                    text: 'delete2',
+                    process: function(){
+                        //这是一个复杂的批处理，参数是一个对象
+                        //除after()以外的函数的items参数都是被标记为checked的数据条目集合
+                        dataTable.batch({
+                            //先于AJAX请求执行的函数，注意，只有返回true才会继续执行ajax请求
+                            before: function(items){
+                                if (confirm('are you sure you want to delete all the items that have been choosen?')){
+                                    for (var key in items){
+                                        items[key].render(2, {
+                                            status: 'loading',
+                                            statustext: 'deleting'
+                                        });
+                                    }
+                                    return true;
+                                } else {
+                                    return false;
+                                }
+                            },
+                            //请求的地址，只有该项为字符串的情况下，才会发送ajax请求
+                            url: 'data/batch.json',
+                            //获取所需发送的参数，此处是获取id字符串
+                            data: function(items){
+                                var ids = $.map(items, function(item, i){
+                                    return item.key;
+                                });
+                                return 'ids=' + ids.join(',');
+                            },
+                            //请求成功后的回调函数
+                            //可选项，如果没有设置，将直接根据返回的数据执行render()
+                            //注意：此处的items参数为ajax返回的数据的items子对象
+                            //注意：如果此处仍然将items返回继续返回，则render()操作会继续被执行
+                            after: function(items){
+                                alert(typeof items);
+                                try { console.log(items); } catch(e){}
+                                return items;
+                            }
+                        });
+                    }
+                }
+            ]
+        });
     }
-})
+});
 
 
 //]]>

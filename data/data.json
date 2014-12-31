@@ -1,96 +1,59 @@
 {
     "status": "success",
+    "tagname": "table",
     "cols": {
         "status": {
-            "name": "status",
-            "tpl": "<span class=\"status status-{{classname}}\">{{value}}</span>",
-            "align": "left",
-            "vlign": "top"
+            "name": "status"
         },
         "subject": {
-            "name": "subject",
-            "tpl": "<div class=\"objectwrap\"><span class=\"thumb\"><img src =\"{{thumb}}\" alt=\"\" /></span><span class=\"title\"><a href=\"{{url}}\">{{title}}</a></span><span class=\"serialcode\">{{serialcode}}</span></div>",
-            "align": "left",
-            "vlign": "top"
+            "name": "subject"
         },
         "price": {
-            "name": "price",
-            "tpl": ["<div class=\"objectwrap\">{{value}} rmb</div>", "<div class=\"objectwrap\"><input type=\"text\" value=\"{{value}}\" /> rmb</div>"]
+            "name": "price"
         },
         "operator": {
-            "name": "operator",
-            "tpl": [
-                "<div class=\"operatorwrap\"><a class=\"edit\" href=\"javascript: void(0)\">edit</a> <a class=\"delete\" href=\"javascript: void(0)\">delete</a></div>",
-                "<div class=\"operatorwrap\"><a class=\"save\" href=\"javascript: void(0)\">save</a> <a class=\"cancel\" href=\"javascript: void(0)\">cancel</a></div>"
-            ]
+            "name": "operator"
         }
     },
+    "tpl": [
+        "<td class=\"vui-datatable-col-status\"><div class=\"vui-datatable-inner\"><span class=\"status status-{{status}}\">{{statustext}}</span></div></td><td class=\"vui-datatable-col-subject\"><div class=\"vui-datatable-inner\"><div class=\"objectwrap\"><span class=\"thumb\"><img src =\"{{thumb}}\" alt=\"\" /></span><span class=\"title\"><a href=\"{{url}}\">{{title}}</a></span><span class=\"serialcode\">{{serialcode}}</span></div></div></td><td class=\"vui-datatable-col-price\"><div class=\"vui-datatable-inner\"><div class=\"objectwrap\">{{price}} rmb</div></div></td><td class=\"vui-datatable-col-operator\"><div class=\"vui-datatable-inner\"><div class=\"operatorwrap\"><a class=\"edit\" href=\"javascript: void(0)\">edit</a> <a class=\"delete\" href=\"javascript: void(0)\">delete</a></div></div></td>",
+        "<td class=\"vui-datatable-col-status\"><div class=\"vui-datatable-inner\"><span class=\"status status-{{status}}\">{{statustext}}</span></div></td><td class=\"vui-datatable-col-subject\"><div class=\"vui-datatable-inner\"><div class=\"objectwrap\"><span class=\"thumb\"><img src =\"{{thumb}}\" alt=\"\" /></span><span class=\"title\"><a href=\"{{url}}\">{{title}}</a></span><span class=\"serialcode\">{{serialcode}}</span></div></div></td><td class=\"vui-datatable-col-price\"><div class=\"vui-datatable-inner\"><div class=\"objectwrap\"><input type=\"text\" value=\"{{price}}\" /> rmb</div></div></td><td class=\"vui-datatable-col-operator\"><div class=\"vui-datatable-inner\"><div class=\"operatorwrap\"><a class=\"save\" href=\"javascript: void(0)\">save</a> <a class=\"cancel\" href=\"javascript: void(0)\">cancel</a></div></div></td>",
+        "<td class=\"vui-datatable-col-status\"><div class=\"vui-datatable-inner\"><span class=\"status status-{{status}}\">{{statustext}}</span></div></td><td class=\"vui-datatable-col-subject\"><div class=\"vui-datatable-inner\"><div class=\"objectwrap\"><span class=\"thumb\"><img src =\"{{thumb}}\" alt=\"\" /></span><span class=\"title\"><a href=\"{{url}}\">{{title}}</a></span><span class=\"serialcode\">{{serialcode}}</span></div></div></td><td class=\"vui-datatable-col-price\"><div class=\"vui-datatable-inner\"><div class=\"objectwrap\">{{price}} rmb</div></div></td><td class=\"vui-datatable-col-operator\"><div class=\"vui-datatable-inner\"><div class=\"operatorwrap\">loading...</div></div></td>"
+    ],
+    "batch": 1,
     "items": {
         "14395": {
-            "fields": {
-                "status": {
-                    "value": "in promotion",
-                    "classname": "success"
-                },
-                "subject": {
-                    "value": "1246754",
-                    "thumb": "thumb.jpg",
-                    "url": "http://www.baidu.com",
-                    "title": "Hermes Birkin Classic (2013/14 AW)",
-                    "serialcode": "7700HGHJGU"
-                },
-                "price": {
-                    "value": "258"
-                },
-                "operator": {
-                    "editurl": "edit.json",
-                    "deleteurl": "delete.json"
-                }
-            }
+            "status": "success",
+            "statustext": "in promotion",
+            "thumb": "thumb.jpg",
+            "url": "http://www.baidu.com",
+            "title": "Hermes Birkin Classic (2013/14 AW)",
+            "serialcode": "7700HGHJGU",
+            "price": "258",
+            "editurl": "edit.json",
+            "deleteurl": "delete.json"
         },
         "943522": {
-            "fields": {
-                "status": {
-                    "value": "in promotion",
-                    "classname": "success"
-                },
-                "subject": {
-                    "value": "1246754",
-                    "thumb": "thumb.jpg",
-                    "url": "http://www.baidu.com",
-                    "title": "Hermes Birkin Classic (2013/14 AW)",
-                    "serialcode": "7700HGHJGU"
-                },
-                "price": {
-                    "value": "258"
-                },
-                "operator": {
-                    "editurl": "edit.json",
-                    "deleteurl": "delete.json"
-                }
-            }
+            "status": "success",
+            "statustext": "in promotion",
+            "thumb": "thumb.jpg",
+            "url": "http://www.baidu.com",
+            "title": "Hermes Birkin Classic (2013/14 AW)",
+            "serialcode": "7700HGHJGU",
+            "price": "258",
+            "editurl": "edit.json",
+            "deleteurl": "delete.json"
         },
         "234802": {
-            "fields": {
-                "status": {
-                    "value": "in promotion",
-                    "classname": "success"
-                },
-                "subject": {
-                    "value": "1246754",
-                    "thumb": "thumb.jpg",
-                    "url": "http://www.baidu.com",
-                    "title": "Hermes Birkin Classic (2013/14 AW)",
-                    "serialcode": "7700HGHJGU"
-                },
-                "price": {
-                    "value": "258"
-                },
-                "operator": {
-                    "editurl": "edit.json",
-                    "deleteurl": "delete.json"
-                }
-            }
+            "status": "success",
+            "statustext": "in promotion",
+            "thumb": "thumb.jpg",
+            "url": "http://www.baidu.com",
+            "title": "Hermes Birkin Classic (2013/14 AW)",
+            "serialcode": "7700HGHJGU",
+            "price": "258",
+            "editurl": "edit.json",
+            "deleteurl": "delete.json"
         }
     }
 }
