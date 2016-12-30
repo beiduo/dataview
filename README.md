@@ -1,4 +1,9 @@
 #Dataview plugin for jQuery
+
+Move on to Angular 1.5+
+
+https://github.com/beiduo/ng-datatable 
+
 ***
 
 ##组件简介
